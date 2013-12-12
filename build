@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# The debian version has to be this crazy string so that apt/dpkg understand
+# that we're upgrading from whatever the distro ships with. Otherwise, when
+# running `apt-get install -fy`, Ubuntu will install the distro version and
+# its millions of dependencies.
+PACKAGE=erlang
+VERSION=R16B03
+DEB_VERSION="1:16.b.3"
+REVISION=agora-`date +%Y%m%d-%H%M`
+TARGET="$PACKAGE-$VERSION"
+DEPLOY_PATH=/home/vagrant/debian-packages/`lsb_release -cs`/$PACKAGE/
+GIT_USER=`git config --global user.name`
+GIT_EMAIL=`git config --global user.email`
+
+cd otp_src_$VERSION
+./configure --prefix=/usr \
+  --enable-threads  \
+  --enable-smp-support  \
+  --enable-kernel-poll  \
+  --enable-hipe \
+  --enable-sctp \
+  --with-ssl  \
+  --with-termcap  \
+  --without-javac \
+  --without-wx
+
+make
+rm -rf /tmp/$TARGET
+mkdir /tmp/$TARGET
+make install DESTDIR=/tmp/$TARGET
+cd ..
+
+rm -f $TARGET.deb
+fpm -s dir -t deb -n $PACKAGE -v $DEB_VERSION --iteration $REVISION -C /tmp/$TARGET \
+  -p $TARGET.deb \
+  -d "libc6 (>= 2.4)" \
+  -d "libtinfo5" \
+  -d "procps" \
+  -d "zlib1g (>= 1:1.2.2)" \
+  -d "libsctp1 (>= 1.0.11+dfsg)" \
+  -d "libssl1.0.0 (>= 1.0.0)" \
+  --maintainer "$GIT_USER <$GIT_EMAIL>" \
+  usr
