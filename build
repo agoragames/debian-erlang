@@ -30,9 +30,11 @@ rm -rf /tmp/$TARGET
 mkdir /tmp/$TARGET
 make install DESTDIR=/tmp/$TARGET
 cd ..
+mkdir -p /tmp/$TARGET/usr/share
+cp -r man /tmp/$TARGET/usr/share/
 
 rm -f $TARGET.deb
-fpm -s dir -t deb -n $PACKAGE -v $DEB_VERSION --iteration $REVISION -C /tmp/$TARGET \
+fpm -s dir -t deb -n $PACKAGE-base -v $DEB_VERSION --iteration $REVISION -C /tmp/$TARGET \
   -p $TARGET.deb \
   -d "libc6 (>= 2.4)" \
   -d "libtinfo5" \
